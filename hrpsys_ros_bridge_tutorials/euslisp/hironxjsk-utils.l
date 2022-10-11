@@ -131,17 +131,17 @@
 (defmethod hironxjsk-sensor-robot-safe
   (:init (&rest args)
     (send-super* :init args)
-    ;; (setq collision-avoidance-links (send self :links))
-    ;; (setq larm-collision-avoidance-links collision-avoidance-links)
-    ;; (setq rarm-collision-avoidance-links collision-avoidance-links)
+    (setq collision-avoidance-links (send self :links))
+    (setq larm-collision-avoidance-links collision-avoidance-links)
+    (setq rarm-collision-avoidance-links collision-avoidance-links)
     )
   ;; collision check methods
   (:collision-check-pairs
     (&rest args)
     (let (pairs)
       (if args (warning-message 1 ":collision-check-pairs is re-defined in hironxjsk-sensor-robot-safe class and not intend to take any arguments ~A" args))
-      ;; (setq pairs (send-super :collision-check-pairs :links collision-avoidance-links))
-      (setq pairs (send-super :collision-check-pairs))
+      (setq pairs (send-super :collision-check-pairs :links collision-avoidance-links))
+      ;; (setq pairs (send-super :collision-check-pairs))
       ;; remove collision between "CHEST_JOINT0_Link" and "HEAD_JOINT1_Link"
       (setq pairs (remove-if #'(lambda (x)
                                  (subsetp (list "CHEST_JOINT0_Link" "HEAD_JOINT1_Link")
