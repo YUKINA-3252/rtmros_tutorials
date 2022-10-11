@@ -99,9 +99,6 @@
     (send self :hand-width arm 100)))
 
 ;; additional robot model description from camera_info
-;;
-(defun HIRONXJSK () (setq *HIRONXJSK* (instance HIRONXJSK-sensor-robot :init)))
-;;
 (defclass HIRONXJSK-sensor-robot
   :super HIRONXJSK-robot
   :slots (head_camera-depth head_camera-rgb))
@@ -122,3 +119,35 @@
 
   (:head_camera-depth (&rest args) (forward-message-to head_camera-depth args))
   (:head_camera-rgb (&rest args) (forward-message-to head_camera-rgb args)))
+
+;; for collision detection
+;; https://github.com/jsk-ros-pkg/jsk_robot/pull/895
+;; If we decide not to define collision-avoidance-links, following style seems better:
+;; https://github.com/jsk-ros-pkg/jsk_robot/pull/1026
+(defclass hironxjsk-sensor-robot-safe
+  :super HIRONXJSK-sensor-robot
+  :slots ())
+;;
+(defmethod hironxjsk-sensor-robot-safe
+  (:init (&rest args)
+    (send-super* :init args)
+    ;; (setq collision-avoidance-links (send self :links))
+    ;; (setq larm-collision-avoidance-links collision-avoidance-links)
+    ;; (setq rarm-collision-avoidance-links collision-avoidance-links)
+    )
+  ;; collision check methods
+  (:collision-check-pairs
+    (&rest args)
+    (let (pairs)
+      (if args (warning-message 1 ":collision-check-pairs is re-defined in hironxjsk-sensor-robot-safe class and not intend to take any arguments ~A" args))
+      ;; (setq pairs (send-super :collision-check-pairs :links collision-avoidance-links))
+      (setq pairs (send-super :collision-check-pairs))
+      ;; remove collision between "CHEST_JOINT0_Link" and "HEAD_JOINT1_Link"
+      (setq pairs (remove-if #'(lambda (x)
+                                 (subsetp (list "CHEST_JOINT0_Link" "HEAD_JOINT1_Link")
+                                          (list (send (car x) :name) (send (cdr x) :name))
+                                          :test #'substringp))
+                             pairs))
+      pairs)))
+
+(defun HIRONXJSK () (setq *HIRONXJSK* (instance hironxjsk-sensor-robot-safe :init)))

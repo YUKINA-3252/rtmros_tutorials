@@ -250,11 +250,13 @@
           (:larm (setq arm :lhand)))
     (send self :hand-width arm 100 :time time :effort effort)))
 
-(defun hironxjsk-init (&rest args)
+(defun hironxjsk-init (&key (safe t) &rest args)
   (if (not (boundp '*ri*))
       (setq *ri* (instance* hironxjsk-interface :init args)))
   (if (not (boundp '*hironxjsk*))
-      (setq *hironxjsk* (instance hironxjsk-sensor-robot :init)))
+    (if safe
+      (setq *hironxjsk* (instance hironxjsk-sensor-robot-safe :init))
+      (setq *hironxjsk* (instance hironxjsk-sensor-robot :init))))
   ;; read initial robot state
   (send *hironxjsk* :angle-vector (send *ri* :state :potentio-vector))
   ;; return robot instance
